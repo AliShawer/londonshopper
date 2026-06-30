@@ -72,11 +72,13 @@ input:focus{outline:none;border-color:var(--accent);background:var(--surface)}
 .photo-overlay{background:rgba(0,0,0,0.0);padding:8px 10px;display:flex;align-items:center;justify-content:space-between}
 .change-photo-btn{font-size:11px;color:var(--text2);background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;font-family:var(--sans)}
 
-/* ── Voice button ── */
-.voice-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;border:1.5px dashed var(--border2);border-radius:var(--radius-sm);background:transparent;cursor:pointer;color:var(--text2);font-size:14px;font-weight:500;transition:all 0.2s;font-family:var(--sans);margin-bottom:14px}
-.voice-btn.recording{border-color:#C0392B;border-style:solid;color:#C0392B;background:#FEF5F5;animation:pulse 1s infinite}
-.mic-icon{font-size:20px;flex-shrink:0}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.65}}
+/* ── Description input ── */
+.desc-textarea{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-size:14px;font-family:var(--sans);margin-bottom:12px;min-height:90px;resize:vertical;line-height:1.5}
+.desc-textarea:focus{outline:none;border-color:var(--accent);background:var(--surface)}
+.desc-hint{font-size:11px;color:var(--text3);margin:-6px 0 14px;line-height:1.5}
+.analyse-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;border-radius:var(--radius-sm);background:var(--accent);color:#fff;border:1px solid var(--accent);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans);margin-bottom:14px}
+.analyse-btn:active{opacity:0.85;transform:scale(0.98)}
+.analyse-btn:disabled{opacity:0.5}
 
 /* ── AI status ── */
 .ai-bar{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--radius-sm);margin-bottom:12px;font-size:13px;color:var(--accent);font-weight:500}
@@ -123,7 +125,7 @@ input:focus{outline:none;border-color:var(--accent);background:var(--surface)}
 /* ── Misc ── */
 .empty{text-align:center;color:var(--text3);font-size:13px;padding:40px 0;line-height:1.9}
 .divider{height:1px;background:var(--border);margin:16px 0}
-.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1C1C1E;color:#fff;border-radius:20px;padding:10px 20px;font-size:13px;font-weight:500;opacity:0;transition:opacity 0.2s;pointer-events:none;z-index:999;white-space:nowrap;max-width:90vw;text-align:center}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1C1C1E;color:#fff;border-radius:14px;padding:10px 18px;font-size:13px;font-weight:500;opacity:0;transition:opacity 0.2s;pointer-events:none;z-index:999;max-width:88vw;text-align:center;white-space:normal;line-height:1.4}
 .toast.show{opacity:1}
 .sheet-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--green);background:var(--green-bg);border:1px solid var(--green-border);border-radius:10px;padding:3px 9px;font-weight:600}
 .sheet-badge.off{color:var(--text3);background:var(--surface2);border-color:var(--border)}
@@ -190,12 +192,11 @@ input:focus{outline:none;border-color:var(--accent);background:var(--surface)}
     </div>
     <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(event)">
 
-    <!-- Voice -->
-    <p class="section-label">Step 2 — Describe by voice</p>
-    <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()">
-      <span class="mic-icon">🎙️</span>
-      <span id="voiceLabel">Tap to describe the item</span>
-    </button>
+    <!-- Description -->
+    <p class="section-label">Step 2 — Describe the item</p>
+    <textarea class="desc-textarea" id="descTextarea" placeholder="e.g. I'm in Zara, this is a linen shirt, comes in white and blue, sizes small medium large in white, medium large in blue, thirty nine pounds"></textarea>
+    <p class="desc-hint">Tip: you can use your phone's keyboard mic (🎤 icon on the keyboard) to dictate this instead of typing.</p>
+    <button class="analyse-btn" id="analyseBtn" onclick="analyseFromText()">✨ Fill in details</button>
 
     <!-- AI status -->
     <div class="ai-bar" id="aiBar" style="display:none">
@@ -236,6 +237,11 @@ input:focus{outline:none;border-color:var(--accent);background:var(--surface)}
       <div class="url-status" id="urlStatus"></div>
     </div>
     <div class="settings-row">
+      <label>Gemini API Key (for AI fill-in)</label>
+      <input type="text" id="geminiKeyInput" placeholder="AIzaSy...">
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">Free key from aistudio.google.com/apikey</div>
+    </div>
+    <div class="settings-row">
       <label>PIN (4 digits)</label>
       <input type="number" id="pinInput" placeholder="1234" maxlength="4">
     </div>
@@ -252,6 +258,7 @@ input:focus{outline:none;border-color:var(--accent);background:var(--surface)}
 // ── State ────────────────────────────────────────────────────
 let PIN = localStorage.getItem('lshop_pin') || '1234';
 let SCRIPT_URL = localStorage.getItem('lshop_script_url') || '';
+let GEMINI_KEY = localStorage.getItem('lshop_gemini_key') || '';
 let pinEntry = '', isAuth = false;
 let recognition = null, isRecording = false;
 let currentPhotoDataUrl = null, currentPhotoB64 = null;
@@ -314,46 +321,33 @@ function handlePhoto(e) {
   reader.readAsDataURL(file);
 }
 
-// ── Voice ─────────────────────────────────────────────────────
-function toggleVoice() {
-  if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-    showToast('Voice not supported — try Chrome or Safari'); return;
-  }
-  if (isRecording) { recognition.stop(); return; }
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  recognition = new SR();
-  recognition.lang = 'en-GB'; recognition.continuous = false; recognition.interimResults = false;
-  recognition.onstart = () => {
-    isRecording = true;
-    document.getElementById('voiceBtn').classList.add('recording');
-    document.getElementById('voiceLabel').textContent = 'Listening… tap to stop';
-  };
-  recognition.onresult = e => { analyseWithAI(e.results[0][0].transcript) };
-  recognition.onerror = () => {
-    isRecording = false;
-    document.getElementById('voiceBtn').classList.remove('recording');
-    document.getElementById('voiceLabel').textContent = 'Tap to describe the item';
-    showToast('Voice error — try again');
-  };
-  recognition.onend = () => {
-    isRecording = false;
-    document.getElementById('voiceBtn').classList.remove('recording');
-    document.getElementById('voiceLabel').textContent = 'Tap to describe the item';
-  };
-  recognition.start();
+// ── Description analysis trigger ────────────────────────────
+function analyseFromText() {
+  const text = document.getElementById('descTextarea').value.trim();
+  if (!text) { showToast('Type or dictate a description first'); return; }
+  if (!currentPhotoB64) { showToast('Add a photo first (helps the AI a lot)'); }
+  analyseWithAI(text);
 }
 
 // ── AI Analysis ───────────────────────────────────────────────
 async function analyseWithAI(transcript) {
-  showAIBar('Analysing photo & description…');
+  if (!GEMINI_KEY) {
+    showToast('Add your Gemini API key in ⚙️ Setup first');
+    openSettings();
+    return;
+  }
 
-  const system = `You are a shopping assistant extracting structured clothing item data from a voice description and optionally an image of the item in a shop.
+  showAIBar('Analysing photo & description…');
+  document.getElementById('analyseBtn').disabled = true;
+  document.getElementById('analyseBtn').textContent = 'Analysing…';
+
+  const prompt = `You are a shopping assistant extracting structured clothing item data from a voice/text description and optionally an image of the item in a shop.
 
 The description may mention multiple color variants of the same item (e.g. "comes in black and white"). Treat each color as a SEPARATE variant with its own entry.
 
 Sizes may be specified per color, or shared across all colors if not specified per color.
 
-Respond ONLY with valid JSON — no markdown, no explanation, no backticks.
+Respond ONLY with valid JSON — no markdown, no explanation, no backticks, no surrounding text.
 
 Return an array of variant objects, one per color variant:
 [
@@ -372,28 +366,34 @@ Return an array of variant objects, one per color variant:
 
 If only one color is mentioned or visible, return an array with one object.
 Price should be a number. If not mentioned, use null.
-Sizes should be an array of strings. If not mentioned, use [].`;
+Sizes should be an array of strings. If not mentioned, use [].
 
-  const userContent = [];
+Voice/text description: "${transcript}"`;
+
+  const parts = [{ text: prompt }];
   if (currentPhotoB64) {
-    userContent.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: currentPhotoB64 } });
+    parts.unshift({ inline_data: { mime_type: 'image/jpeg', data: currentPhotoB64 } });
   }
-  userContent.push({ type: 'text', text: `Voice description: "${transcript}"` });
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, system, messages: [{ role: 'user', content: userContent }] })
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
+      body: JSON.stringify({ contents: [{ parts }] })
     });
     const data = await res.json();
-    const raw = data.content.find(b => b.type === 'text')?.text || '[]';
+    if (data.error) throw new Error(data.error.message || 'Gemini API error');
+    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
     const variants = JSON.parse(raw.replace(/```json|```/g, '').trim());
     hideAIBar();
+    document.getElementById('analyseBtn').disabled = false;
+    document.getElementById('analyseBtn').textContent = '✨ Fill in details';
     showVariants(variants);
   } catch (err) {
     hideAIBar();
-    showToast('AI error — check connection');
+    document.getElementById('analyseBtn').disabled = false;
+    document.getElementById('analyseBtn').textContent = '✨ Fill in details';
+    showToast('AI error: ' + (err.message || 'unknown').slice(0, 60));
     console.error(err);
   }
 }
@@ -599,6 +599,7 @@ function resetForm() {
 // ── Settings ──────────────────────────────────────────────────
 function openSettings() {
   document.getElementById('scriptUrlInput').value = SCRIPT_URL;
+  document.getElementById('geminiKeyInput').value = GEMINI_KEY;
   document.getElementById('pinInput').value = PIN;
   document.getElementById('settingsOverlay').classList.add('open');
 }
@@ -607,8 +608,10 @@ function maybeCloseSettings(e) { if (e.target === document.getElementById('setti
 
 function saveSettings() {
   const url = document.getElementById('scriptUrlInput').value.trim();
+  const key = document.getElementById('geminiKeyInput').value.trim();
   const pin = document.getElementById('pinInput').value.trim();
   if (url) { SCRIPT_URL = url; localStorage.setItem('lshop_script_url', url) }
+  if (key) { GEMINI_KEY = key; localStorage.setItem('lshop_gemini_key', key) }
   if (pin && pin.length === 4 && /^\d+$/.test(pin)) { PIN = pin; localStorage.setItem('lshop_pin', pin) }
   updateSheetBadge();
   closeSettings();
