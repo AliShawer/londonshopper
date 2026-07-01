@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>London Shopper</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#FAF8F5;--surface:#FFFFFF;--surface2:#F2EDE8;--border:#E0D9D2;--border2:#C8C0B8;
+  --text:#1C1C1E;--text2:#6B6560;--text3:#9E9890;
+  --accent:#C9847A;--accent-bg:#F7EDEC;--accent-border:#E8C0BB;
+  --green:#3D9970;--green-bg:#EAF5EE;--green-border:#B2D9C2;
+  --radius:12px;--radius-sm:8px;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:ui-monospace,'SF Mono',monospace;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;max-width:430px;margin:0 auto;display:flex;flex-direction:column}
+
+/* ── Header ── */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20}
+.header-title{font-size:17px;font-weight:700;letter-spacing:-0.3px}
+.header-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.settings-btn{background:none;border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:12px;color:var(--text2);cursor:pointer;font-family:var(--sans)}
+
+/* ── Tabs ── */
+.tab-bar{display:flex;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:57px;z-index:19}
+.tab{flex:1;padding:11px 4px 9px;font-size:11px;font-weight:600;text-align:center;cursor:pointer;color:var(--text3);border:none;background:none;border-bottom:2.5px solid transparent;letter-spacing:0.04em;text-transform:uppercase;transition:all 0.15s;font-family:var(--sans)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* ── Panels ── */
+.panel{display:none;padding:16px;flex:1}
+.panel.active{display:block}
+
+/* ── PIN ── */
+.pin-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:65vh;gap:20px}
+.lock-circle{width:56px;height:56px;background:var(--accent-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px}
+.pin-title{font-size:18px;font-weight:700;text-align:center}
+.pin-sub{font-size:13px;color:var(--text2);text-align:center}
+.pin-dots{display:flex;gap:13px}
+.pin-dot{width:13px;height:13px;border-radius:50%;border:1.5px solid var(--border2);background:transparent;transition:all 0.12s}
+.pin-dot.filled{background:var(--accent);border-color:var(--accent)}
+.pin-error{color:#C0392B;font-size:13px;font-weight:500;min-height:18px}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:240px}
+.pin-btn{padding:17px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);font-size:22px;font-weight:400;cursor:pointer;text-align:center;color:var(--text);transition:all 0.1s;font-family:var(--sans)}
+.pin-btn:active{background:var(--surface2);transform:scale(0.95)}
+.pin-hint{font-size:11px;color:var(--text3)}
+
+/* ── Cards & forms ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.section-label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;margin-top:4px}
+.field-label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px;font-weight:500}
+input[type=text],input[type=number]{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-size:14px;font-family:var(--sans);-webkit-appearance:none;appearance:none}
+input:focus{outline:none;border-color:var(--accent);background:var(--surface)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.field-wrap{display:flex;flex-direction:column;gap:4px}
+.field-wrap input{margin:0}
+.btn{width:100%;padding:13px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text);transition:all 0.15s;font-family:var(--sans)}
+.btn:active{transform:scale(0.97);opacity:0.85}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-green{background:var(--green);color:#fff;border-color:var(--green)}
+.btn-ghost{background:transparent;border:none;color:var(--text2);font-size:13px;padding:8px;width:auto}
+.btn-danger{color:#C0392B;border-color:#F5C6C3;background:transparent}
+.btn-sm{padding:9px 14px;font-size:13px;width:auto}
+
+/* ── Upload area ── */
+.upload-area{border:2px dashed var(--border);border-radius:var(--radius);text-align:center;cursor:pointer;transition:all 0.2s;background:var(--bg);overflow:hidden;margin-bottom:14px}
+.upload-placeholder{padding:28px 16px}
+.upload-area:hover{border-color:var(--accent);background:var(--accent-bg)}
+.upload-area.has-image{border:1px solid var(--border);border-style:solid}
+.upload-area img{width:100%;max-height:240px;object-fit:cover;display:block}
+.photo-overlay{background:rgba(0,0,0,0.0);padding:8px 10px;display:flex;align-items:center;justify-content:space-between}
+.change-photo-btn{font-size:11px;color:var(--text2);background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;font-family:var(--sans)}
+
+/* ── Description input ── */
+.desc-textarea{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-size:14px;font-family:var(--sans);margin-bottom:12px;min-height:90px;resize:vertical;line-height:1.5}
+.desc-textarea:focus{outline:none;border-color:var(--accent);background:var(--surface)}
+.desc-hint{font-size:11px;color:var(--text3);margin:-6px 0 14px;line-height:1.5}
+.analyse-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;border-radius:var(--radius-sm);background:var(--accent);color:#fff;border:1px solid var(--accent);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans);margin-bottom:14px}
+.analyse-btn:active{opacity:0.85;transform:scale(0.98)}
+.analyse-btn:disabled{opacity:0.5}
+
+/* ── AI status ── */
+.ai-bar{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--radius-sm);margin-bottom:12px;font-size:13px;color:var(--accent);font-weight:500}
+.spin{animation:spin 1s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Variant cards ── */
+.variants-section{margin-bottom:14px}
+.variant-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;position:relative}
+.variant-card.removing{opacity:0.4}
+.variant-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.variant-code{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);background:var(--accent-bg);border:1px solid var(--accent-border);padding:3px 8px;border-radius:4px;letter-spacing:0.05em}
+.variant-remove{background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:2px 6px;line-height:1}
+.variant-remove:hover{color:#C0392B}
+.variant-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.variant-fields input{margin:0;font-size:13px;padding:8px 10px}
+.variant-sizes{font-size:12px;color:var(--text2);margin-top:2px}
+
+/* ── Catalogue items ── */
+.item-card{display:flex;gap:12px;align-items:flex-start}
+.item-thumb{width:60px;height:60px;object-fit:cover;border-radius:var(--radius-sm);flex-shrink:0;border:1px solid var(--border)}
+.item-thumb-ph{width:60px;height:60px;background:var(--surface2);border-radius:var(--radius-sm);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px}
+.item-body{flex:1;min-width:0}
+.item-code{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--accent);background:var(--accent-bg);border:1px solid var(--accent-border);padding:2px 7px;border-radius:4px;display:inline-block;letter-spacing:0.05em;margin-bottom:3px}
+.item-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item-meta{font-size:11px;color:var(--text2);margin-top:1px}
+.item-actions{display:flex;gap:6px;margin-top:8px}
+.save-btn{flex:1;padding:7px;font-size:12px;font-weight:600;border-radius:6px;border:1px solid var(--green-border);background:var(--green-bg);color:var(--green);cursor:pointer;font-family:var(--sans)}
+.save-btn:active{background:var(--green);color:#fff}
+.del-item-btn{padding:7px 10px;font-size:12px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--text3);cursor:pointer;font-family:var(--sans)}
+
+/* ── Settings panel ── */
+.settings-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:flex-end}
+.settings-overlay.open{display:flex}
+.settings-sheet{background:var(--surface);border-radius:20px 20px 0 0;padding:20px 16px 36px;width:100%;max-width:430px;margin:0 auto}
+.settings-title{font-size:16px;font-weight:700;margin-bottom:16px}
+.settings-row{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.settings-row label{font-size:12px;color:var(--text2);font-weight:500}
+.settings-row input{font-size:13px;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-family:var(--sans)}
+.url-status{font-size:11px;margin-top:2px;min-height:16px}
+.url-status.ok{color:var(--green)}
+.url-status.err{color:#C0392B}
+
+/* ── Misc ── */
+.empty{text-align:center;color:var(--text3);font-size:13px;padding:40px 0;line-height:1.9}
+.divider{height:1px;background:var(--border);margin:16px 0}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1C1C1E;color:#fff;border-radius:14px;padding:10px 18px;font-size:13px;font-weight:500;opacity:0;transition:opacity 0.2s;pointer-events:none;z-index:999;max-width:88vw;text-align:center;white-space:normal;line-height:1.4}
+.toast.show{opacity:1}
+.sheet-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--green);background:var(--green-bg);border:1px solid var(--green-border);border-radius:10px;padding:3px 9px;font-weight:600}
+.sheet-badge.off{color:var(--text3);background:var(--surface2);border-color:var(--border)}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">🛍️ London Shopper</div>
+    <div class="header-sub">Catalogue tool</div>
+  </div>
+  <button class="settings-btn" onclick="openSettings()">⚙️ Setup</button>
+</div>
+
+<div class="tab-bar">
+  <button class="tab active" onclick="showTab('catalogue')" id="tab-catalogue">Catalogue</button>
+  <button class="tab" onclick="showTab('items')" id="tab-items">Items (<span id="itemCountTab">0</span>)</button>
+</div>
+
+<!-- CATALOGUE TAB -->
+<div class="panel active" id="panel-catalogue">
+
+  <!-- PIN -->
+  <div class="pin-screen" id="pinScreen">
+    <div class="lock-circle">🔒</div>
+    <div>
+      <div class="pin-title">Shop mode</div>
+      <div class="pin-sub" style="margin-top:4px">Enter your PIN to start</div>
+    </div>
+    <div class="pin-dots" id="pinDots">
+      <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
+    </div>
+    <div class="pin-error" id="pinError"></div>
+    <div class="pin-grid">
+      <button class="pin-btn" onclick="pinPress('1')">1</button>
+      <button class="pin-btn" onclick="pinPress('2')">2</button>
+      <button class="pin-btn" onclick="pinPress('3')">3</button>
+      <button class="pin-btn" onclick="pinPress('4')">4</button>
+      <button class="pin-btn" onclick="pinPress('5')">5</button>
+      <button class="pin-btn" onclick="pinPress('6')">6</button>
+      <button class="pin-btn" onclick="pinPress('7')">7</button>
+      <button class="pin-btn" onclick="pinPress('8')">8</button>
+      <button class="pin-btn" onclick="pinPress('9')">9</button>
+      <button class="pin-btn" style="font-size:13px;font-weight:600" onclick="pinPress('clr')">CLR</button>
+      <button class="pin-btn" onclick="pinPress('0')">0</button>
+      <button class="pin-btn" onclick="pinPress('del')">⌫</button>
+    </div>
+    <div class="pin-hint">Default PIN: 1234</div>
+  </div>
+
+  <!-- Main content -->
+  <div id="shopContent" style="display:none">
+
+    <!-- Photo -->
+    <p class="section-label">Step 1 — Photo</p>
+    <div class="upload-area" id="uploadArea" onclick="triggerUpload()">
+      <div class="upload-placeholder">
+        <div style="font-size:36px;margin-bottom:8px">📷</div>
+        <p style="font-size:14px;color:var(--text2);font-weight:500">Tap to take or choose photo</p>
+        <p style="font-size:11px;color:var(--text3);margin-top:4px">Opens camera or gallery</p>
+      </div>
+    </div>
+    <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(event)">
+
+    <!-- Description -->
+    <p class="section-label">Step 2 — Describe the item</p>
+    <textarea class="desc-textarea" id="descTextarea" placeholder="e.g. I'm in Zara, this is a linen shirt, comes in white and blue, sizes small medium large in white, medium large in blue, thirty nine pounds"></textarea>
+    <p class="desc-hint">Tip: you can use your phone's keyboard mic (🎤 icon on the keyboard) to dictate this instead of typing.</p>
+    <button class="analyse-btn" id="analyseBtn" onclick="analyseFromText()">✨ Fill in details</button>
+
+    <!-- AI status -->
+    <div class="ai-bar" id="aiBar" style="display:none">
+      <span class="spin">⏳</span>
+      <span id="aiBarText">Analysing…</span>
+    </div>
+
+    <!-- Variants -->
+    <div id="variantsSection" style="display:none">
+      <p class="section-label">Step 3 — Review & correct</p>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:10px">AI found these variants — edit anything, remove what's wrong.</p>
+      <div id="variantsList"></div>
+      <button class="btn btn-primary" onclick="addAllVariants()" id="addAllBtn">Add all to catalogue</button>
+      <button class="btn" onclick="resetForm()" style="margin-top:8px">Start over</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ITEMS TAB -->
+<div class="panel" id="panel-items">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <p class="section-label" style="margin:0">Catalogue</p>
+    <span id="sheetBadge" class="sheet-badge off">No sheet connected</span>
+  </div>
+  <div id="itemsList"><p class="empty">No items yet.<br>Go to Catalogue tab to add items.</p></div>
+  <div class="divider"></div>
+  <button class="btn btn-danger" onclick="clearAll()" style="margin-bottom:20px">Clear all items</button>
+</div>
+
+<!-- Settings overlay -->
+<div class="settings-overlay" id="settingsOverlay" onclick="maybeCloseSettings(event)">
+  <div class="settings-sheet">
+    <div class="settings-title">⚙️ Setup</div>
+    <div class="settings-row">
+      <label>Google Apps Script URL</label>
+      <input type="text" id="scriptUrlInput" placeholder="Paste your script URL here">
+      <div class="url-status" id="urlStatus"></div>
+    </div>
+    <div class="settings-row">
+      <label>Gemini API Key (for AI fill-in)</label>
+      <input type="text" id="geminiKeyInput" placeholder="AIzaSy...">
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">Free key from aistudio.google.com/apikey</div>
+    </div>
+    <div class="settings-row">
+      <label>PIN (4 digits)</label>
+      <input type="number" id="pinInput" placeholder="1234" maxlength="4">
+    </div>
+    <button class="btn btn-primary" onclick="saveSettings()" style="margin-bottom:10px">Save settings</button>
+    <button class="btn" onclick="testConnection()">Test sheet connection</button>
+    <div style="height:8px"></div>
+    <button class="btn btn-ghost" style="width:100%" onclick="closeSettings()">Close</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// v3-drive-upload
+// ── State ────────────────────────────────────────────────────
+let PIN = localStorage.getItem('lshop_pin') || '1234';
+let SCRIPT_URL = localStorage.getItem('lshop_script_url') || '';
+async function resizeImage(dataUrl, maxWidth, quality) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const scale = Math.min(1, maxWidth / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.src = dataUrl;
+  });
+}
+
+async function uploadPhotoToSheet(base64DataUrl, filename) {
+  if (!SCRIPT_URL) return null;
+  try {
+    const base64 = base64DataUrl.split(',')[1];
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'uploadPhoto', base64, filename })
+    });
+    const data = await res.json();
+    if (data.ok) return data.url;
+  } catch(e) { console.warn('Drive upload failed', e); }
+  return null;
+}
+let GEMINI_KEY = localStorage.getItem('lshop_gemini_key') || '';
+let pinEntry = '', isAuth = false;
+let recognition = null, isRecording = false;
+let currentPhotoDataUrl = null, currentPhotoB64 = null;
+let pendingVariants = [];
+
+function ls(k, fallback) { try { return JSON.parse(localStorage.getItem(k)) ?? fallback } catch(e) { return fallback } }
+function ss(k, v) { try { localStorage.setItem(k, JSON.stringify(v)) } catch(e) {} }
+let items = ls('lshop3_items', []);
+
+// ── Tabs ─────────────────────────────────────────────────────
+function showTab(t) {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
+  document.getElementById('tab-' + t).classList.add('active');
+  document.getElementById('panel-' + t).classList.add('active');
+  if (t === 'items') renderItems();
+}
+
+// ── PIN ──────────────────────────────────────────────────────
+function pinPress(k) {
+  if (k === 'clr') pinEntry = '';
+  else if (k === 'del') pinEntry = pinEntry.slice(0, -1);
+  else if (pinEntry.length < 4) pinEntry += k;
+  updateDots();
+  if (pinEntry.length === 4) checkPin();
+}
+function updateDots() {
+  for (let i = 0; i < 4; i++)
+    document.getElementById('d' + i).classList.toggle('filled', i < pinEntry.length);
+}
+function checkPin() {
+  if (pinEntry === PIN) {
+    isAuth = true;
+    document.getElementById('pinScreen').style.display = 'none';
+    document.getElementById('shopContent').style.display = 'block';
+  } else {
+    document.getElementById('pinError').textContent = 'Wrong PIN — try again';
+    pinEntry = ''; updateDots();
+    setTimeout(() => document.getElementById('pinError').textContent = '', 2000);
+  }
+}
+
+// ── Photo ─────────────────────────────────────────────────────
+function triggerUpload() { document.getElementById('photoInput').click() }
+function handlePhoto(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    currentPhotoDataUrl = ev.target.result;
+    currentPhotoB64 = ev.target.result.split(',')[1];
+    const area = document.getElementById('uploadArea');
+    area.classList.add('has-image');
+    area.innerHTML = `
+      <img src="${currentPhotoDataUrl}" alt="Item photo">
+      <div class="photo-overlay">
+        <span style="font-size:11px;color:var(--text2)">Photo added ✓</span>
+        <button class="change-photo-btn" onclick="triggerUpload();event.stopPropagation()">Change photo</button>
+      </div>`;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── Description analysis trigger ────────────────────────────
+function analyseFromText() {
+  const textarea = document.getElementById('descTextarea');
+  const text = textarea.value.trim();
+  if (!text) { showToast('Type or dictate a description first'); return; }
+  if (!currentPhotoB64) { showToast('Add a photo first (helps the AI a lot)'); }
+  textarea.value = '';
+  analyseWithAI(text);
+}
+
+// ── AI Analysis ───────────────────────────────────────────────
+async function analyseWithAI(transcript) {
+  if (!GEMINI_KEY) {
+    showToast('Add your Gemini API key in ⚙️ Setup first');
+    openSettings();
+    return;
+  }
+
+  showAIBar('Analysing photo & description…');
+  document.getElementById('analyseBtn').disabled = true;
+  document.getElementById('analyseBtn').textContent = 'Analysing…';
+
+  const prompt = `You are a shopping assistant extracting structured clothing item data from a voice/text description and optionally an image of the item in a shop.
+
+The description may mention multiple color variants of the same item (e.g. "comes in black and white"). Treat each color as a SEPARATE variant with its own entry.
+
+Sizes may be specified per color, or shared across all colors if not specified per color.
+
+Respond ONLY with valid JSON — no markdown, no explanation, no backticks, no surrounding text.
+
+Return an array of variant objects, one per color variant:
+[
+  {
+    "shopName": "full shop name as mentioned or inferred from image, e.g. Zara",
+    "shopCode": "2-3 uppercase letters abbreviation, e.g. ZR",
+    "typeName": "item type e.g. Dress, Jacket, Top, Trousers, Jeans, Skirt, Shirt, Shoes, Bag, Blazer, Cardigan, Coat, Accessory",
+    "typeCode": "3 uppercase letters e.g. DRS, JKT, TOP, TRS, JNS, SKT, SHT, SHO, BAG, BLZ, CTG, COT, ACC",
+    "colorName": "color name e.g. Black, White, Camel, Navy, Dusty Pink",
+    "colorCode": "3 uppercase letters e.g. BLK, WHT, CAM, NVY, PNK",
+    "category": "one of: Dresses, Tops, Jackets, Jeans, Trousers, Skirts, Shirts, Shoes, Sandals, Swimwear, Bags, Accessories",
+    "price": 39.99,
+    "sizes": ["S", "M", "L"],
+    "desc": "short plain english description, max 8 words"
+  }
+]
+
+If only one color is mentioned or visible, return an array with one object.
+Price should be a number. If not mentioned, use null.
+Sizes should be an array of strings. If not mentioned, use [].
+
+Voice/text description: "${transcript}"`;
+
+  const parts = [{ text: prompt }];
+  if (currentPhotoB64) {
+    parts.unshift({ inline_data: { mime_type: 'image/jpeg', data: currentPhotoB64 } });
+  }
+
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
+      body: JSON.stringify({ contents: [{ parts }] })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message || 'Gemini API error');
+    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
+    const variants = JSON.parse(raw.replace(/```json|```/g, '').trim());
+    hideAIBar();
+    document.getElementById('analyseBtn').disabled = false;
+    document.getElementById('analyseBtn').textContent = '✨ Fill in details';
+    showVariants(variants);
+  } catch (err) {
+    hideAIBar();
+    document.getElementById('analyseBtn').disabled = false;
+    document.getElementById('analyseBtn').textContent = '✨ Fill in details';
+    showToast('AI error: ' + (err.message || 'unknown').slice(0, 60));
+    console.error(err);
+  }
+}
+
+function showAIBar(msg) {
+  document.getElementById('aiBar').style.display = 'flex';
+  document.getElementById('aiBarText').textContent = msg;
+  document.getElementById('variantsSection').style.display = 'none';
+}
+function hideAIBar() { document.getElementById('aiBar').style.display = 'none' }
+
+// ── Variants ──────────────────────────────────────────────────
+function genCode(shopCode, typeCode, colorCode) {
+  const n = items.filter(i => i.shopCode === shopCode && i.typeCode === typeCode && i.colorCode === colorCode).length
+          + pendingVariants.filter(v => v.shopCode === shopCode && v.typeCode === typeCode && v.colorCode === colorCode).length
+          + 1;
+  return `${shopCode}-${typeCode}-${colorCode}-${String(n).padStart(2,'0')}`;
+}
+
+function showVariants(variants) {
+  pendingVariants = variants.map((v, i) => ({ ...v, id: i, code: genCode(v.shopCode, v.typeCode, v.colorCode) }));
+  renderVariantCards();
+  document.getElementById('variantsSection').style.display = 'block';
+}
+
+function renderVariantCards() {
+  const el = document.getElementById('variantsList');
+  if (!pendingVariants.length) { el.innerHTML = ''; return; }
+  el.innerHTML = pendingVariants.map((v, i) => `
+    <div class="variant-card" id="vc-${i}">
+      <div class="variant-header">
+        <span class="variant-code">${v.code}</span>
+        <button class="variant-remove" onclick="removeVariant(${i})" title="Remove this variant">✕</button>
+      </div>
+      <div class="variant-fields">
+        <div class="field-wrap">
+          <label class="field-label">Shop</label>
+          <input type="text" value="${v.shopName}" onchange="updateVariant(${i},'shopName',this.value)">
+        </div>
+        <div class="field-wrap">
+          <label class="field-label">Type</label>
+          <input type="text" value="${v.typeName}" onchange="updateVariant(${i},'typeName',this.value)">
+        </div>
+        <div class="field-wrap">
+          <label class="field-label">Color</label>
+          <input type="text" value="${v.colorName}" onchange="updateVariant(${i},'colorName',this.value)">
+        </div>
+        <div class="field-wrap">
+          <label class="field-label">Price (£)</label>
+          <input type="number" value="${v.price||''}" placeholder="0.00" step="0.01" onchange="updateVariant(${i},'price',parseFloat(this.value))">
+        </div>
+      </div>
+      <div class="field-wrap" style="margin-bottom:0">
+        <label class="field-label">Sizes (comma separated)</label>
+        <input type="text" value="${v.sizes.join(', ')}" placeholder="S, M, L" onchange="updateVariant(${i},'sizesRaw',this.value)">
+      </div>
+      <div class="field-wrap" style="margin-top:8px">
+        <label class="field-label">Description</label>
+        <input type="text" value="${v.desc||''}" placeholder="short description" onchange="updateVariant(${i},'desc',this.value)">
+      </div>
+    </div>`).join('');
+}
+
+function updateVariant(i, field, val) {
+  if (field === 'sizesRaw') pendingVariants[i].sizes = val.split(',').map(s => s.trim()).filter(Boolean);
+  else pendingVariants[i][field] = val;
+}
+
+function removeVariant(i) {
+  pendingVariants.splice(i, 1);
+  if (!pendingVariants.length) { document.getElementById('variantsSection').style.display = 'none'; return; }
+  renderVariantCards();
+}
+
+// ── Stamp image ───────────────────────────────────────────────
+function stampImage(dataUrl, code, callback) {
+  if (!dataUrl) { callback(null); return; }
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement('canvas');
+    c.width = img.width; c.height = img.height;
+    const ctx = c.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    const pad = Math.round(img.width * 0.025);
+    const fsize = Math.max(Math.round(img.width * 0.042), 14);
+    ctx.font = `800 ${fsize}px ui-monospace,monospace`;
+    const tw = ctx.measureText(code).width;
+    const bw = tw + pad * 2.2, bh = fsize + pad * 1.6;
+    const bx = img.width - bw - pad * 1.2, by = img.height - bh - pad * 1.2;
+    ctx.fillStyle = 'rgba(201,132,122,0.92)';
+    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 6); ctx.fill();
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText(code, bx + pad * 1.1, by + bh - pad * 0.85);
+    callback(c.toDataURL('image/jpeg', 0.92));
+  };
+  img.src = dataUrl;
+}
+
+// ── Add all variants ──────────────────────────────────────────
+async function addAllVariants() {
+  const valid = pendingVariants.filter(v => v.price && v.sizes.length);
+  if (!valid.length) { showToast('Check prices and sizes before adding'); return; }
+
+  document.getElementById('addAllBtn').textContent = 'Adding…';
+  document.getElementById('addAllBtn').disabled = true;
+
+  const addOne = async (v) => {
+    await new Promise(resolve => {
+      stampImage(currentPhotoDataUrl, v.code, async stamped => {
+        // Upload to imgbb for storefront URL
+        let photoUrl = null;
+        if (SCRIPT_URL) {
+          // Resize image before upload to reduce payload size
+          const resized = await resizeImage(currentPhotoDataUrl, 800, 0.7);
+          photoUrl = await uploadPhotoToSheet(resized, v.code + '.jpg');
+        }
+        const item = { ...v, photo: stamped, photoUrl, addedAt: Date.now() };
+        items.push(item);
+        ss('lshop3_items', items);
+        if (SCRIPT_URL) pushToSheet(item);
+        resolve();
+      });
+    });
+  };
+
+  for (const v of valid) await addOne(v);
+
+  document.getElementById('itemCountTab').textContent = items.length;
+  document.getElementById('addAllBtn').textContent = 'Add all to catalogue';
+  document.getElementById('addAllBtn').disabled = false;
+  showToast(`${valid.length} item${valid.length > 1 ? 's' : ''} added ✓`);
+  resetForm();
+  showTab('items');
+}
+
+// ── Push to Google Sheet ──────────────────────────────────────
+async function pushToSheet(item) {
+  if (!SCRIPT_URL) return;
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'addItem', item })
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      console.warn('Sheet push returned error:', data.error);
+      showToast('Saved locally, but Sheet sync failed — check Setup');
+    }
+  } catch(e) {
+    console.warn('Sheet push failed', e);
+    showToast('Saved locally, but Sheet sync failed');
+  }
+}
+
+// ── Save photo to camera roll ─────────────────────────────────
+function savePhotoToRoll(photoDataUrl, code) {
+  const a = document.createElement('a');
+  a.href = photoDataUrl;
+  a.download = code + '.jpg';
+  a.click();
+  showToast('Photo saved — share it on WhatsApp');
+}
+
+// ── Render items ──────────────────────────────────────────────
+function renderItems() {
+  document.getElementById('itemCountTab').textContent = items.length;
+  updateSheetBadge();
+  const el = document.getElementById('itemsList');
+  if (!items.length) { el.innerHTML = '<p class="empty">No items yet.<br>Go to Catalogue tab to add items.</p>'; return; }
+  el.innerHTML = [...items].reverse().map((it, ri) => {
+    const i = items.length - 1 - ri;
+    return `<div class="card" style="margin-bottom:8px">
+      <div class="item-card">
+        ${it.photo
+          ? `<img class="item-thumb" src="${it.photo}" alt="${it.code}">`
+          : `<div class="item-thumb-ph">👗</div>`}
+        <div class="item-body">
+          <span class="item-code">${it.code}</span>
+          <div class="item-name">${it.colorName} ${it.typeName}</div>
+          <div class="item-meta">${it.shopName} · £${it.price ? it.price.toFixed(2) : '—'} · ${it.sizes.join(', ')}</div>
+          ${it.desc ? `<div class="item-meta" style="color:var(--text3)">${it.desc}</div>` : ''}
+        </div>
+        <button class="del-item-btn" onclick="removeItem(${i})" style="align-self:flex-start;margin-top:2px">✕</button>
+      </div>
+      ${it.photo ? `
+      <div class="item-actions">
+        <button class="save-btn" onclick="savePhotoToRoll('${it.photo}','${it.code}')">📥 Save photo for WhatsApp</button>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function removeItem(i) {
+  items.splice(i, 1);
+  ss('lshop3_items', items);
+  renderItems();
+}
+
+function clearAll() {
+  if (!confirm('Clear all items? This cannot be undone.')) return;
+  items = []; ss('lshop3_items', items); renderItems();
+  if (SCRIPT_URL) fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'clearItems' }) }).catch(() => {});
+  showToast('All items cleared');
+}
+
+// ── Reset form ────────────────────────────────────────────────
+function resetForm() {
+  currentPhotoDataUrl = null; currentPhotoB64 = null; pendingVariants = [];
+  const area = document.getElementById('uploadArea');
+  area.classList.remove('has-image');
+  area.innerHTML = `<div class="upload-placeholder"><div style="font-size:36px;margin-bottom:8px">📷</div><p style="font-size:14px;color:var(--text2);font-weight:500">Tap to take or choose photo</p><p style="font-size:11px;color:var(--text3);margin-top:4px">Opens camera or gallery</p></div>`;
+  document.getElementById('photoInput').value = '';
+  document.getElementById('variantsSection').style.display = 'none';
+  document.getElementById('variantsList').innerHTML = '';
+  const vl = document.getElementById('voiceLabel'); if (vl) vl.textContent = 'Tap to describe the item';
+  hideAIBar();
+}
+
+// ── Settings ──────────────────────────────────────────────────
+function openSettings() {
+  document.getElementById('scriptUrlInput').value = SCRIPT_URL;
+  document.getElementById('geminiKeyInput').value = GEMINI_KEY;
+  document.getElementById('pinInput').value = PIN;
+  document.getElementById('settingsOverlay').classList.add('open');
+}
+function closeSettings() { document.getElementById('settingsOverlay').classList.remove('open') }
+function maybeCloseSettings(e) { if (e.target === document.getElementById('settingsOverlay')) closeSettings() }
+
+function saveSettings() {
+  const url = document.getElementById('scriptUrlInput').value.trim();
+  const key = document.getElementById('geminiKeyInput').value.trim();
+  const pin = document.getElementById('pinInput').value.trim();
+  if (url) { SCRIPT_URL = url; localStorage.setItem('lshop_script_url', url) }
+  if (key) { GEMINI_KEY = key; localStorage.setItem('lshop_gemini_key', key) }
+  if (pin && pin.length === 4 && /^\d+$/.test(pin)) { PIN = pin; localStorage.setItem('lshop_pin', pin) }
+  updateSheetBadge();
+  closeSettings();
+  showToast('Settings saved');
+}
+
+async function testConnection() {
+  const url = document.getElementById('scriptUrlInput').value.trim();
+  if (!url) { showToast('Paste the script URL first'); return; }
+  document.getElementById('urlStatus').textContent = 'Testing…';
+  document.getElementById('urlStatus').className = 'url-status';
+  try {
+    const res = await fetch(url + '?action=ping');
+    const data = await res.json();
+    if (data.ok) {
+      document.getElementById('urlStatus').textContent = '✓ Connected successfully';
+      document.getElementById('urlStatus').className = 'url-status ok';
+    } else throw new Error();
+  } catch(e) {
+    document.getElementById('urlStatus').textContent = '✗ Could not connect — check the URL';
+    document.getElementById('urlStatus').className = 'url-status err';
+  }
+}
+
+function updateSheetBadge() {
+  const b = document.getElementById('sheetBadge');
+  if (SCRIPT_URL) { b.textContent = '✓ Sheet connected'; b.className = 'sheet-badge' }
+  else { b.textContent = 'No sheet connected'; b.className = 'sheet-badge off' }
+}
+
+// ── Toast ─────────────────────────────────────────────────────
+function showToast(m) {
+  const t = document.getElementById('toast');
+  t.textContent = m; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+// ── Init ──────────────────────────────────────────────────────
+document.getElementById('itemCountTab').textContent = items.length;
+updateSheetBadge();
+</script>
+</body>
+</html>
